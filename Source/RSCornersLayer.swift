@@ -32,21 +32,18 @@ open class RSCornersLayer: CALayer {
         ctx.setStrokeColor(self.strokeColor)
         ctx.setLineWidth(self.strokeWidth)
         
-        for corners in self.cornersArray {
-            for i in 0...corners.count-1 {
-                var idx = i
-                if i == corners.count-1 {
-                    idx = 0
-                }
+        for corners in cornersArray {
+            for idx in 0..<corners.count {
                 let point = corners[idx] as! CGPoint
-                if i == 0 {
+                if idx == 0 {
                     ctx.move(to: point)
                 } else {
                     ctx.addLine(to: point)
                 }
             }
+            ctx.closePath()
         }
-        
+
         ctx.drawPath(using: CGPathDrawingMode.fillStroke)
         
         ctx.restoreGState()
