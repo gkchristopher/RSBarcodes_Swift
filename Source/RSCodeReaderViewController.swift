@@ -46,34 +46,35 @@ open class RSCodeReaderViewController: UIViewController, AVCaptureMetadataOutput
 		}
 		return false
 	}
-	
-	@objc open func hasTorch() -> Bool {
-		if let device = self.device {
-			return device.hasTorch
-		}
-		return false
-	}
-	
-	@objc open func switchCamera() -> AVCaptureDevice.Position {
-		if !Platform.isSimulator {
-			self.session.stopRunning()
-			let captureDevice = self.captureDevice()
-			if let device = captureDevice {
-				self.device = device
-			}
-			self.setupCamera()
-			self.view.setNeedsLayout()
-			self.session.startRunning()
-			if let device = self.device {
-				return device.position
-			} else {
-				return .unspecified
-			}
-		} else {
-			return .unspecified
-		}
-	}
-	
+
+    @objc open func hasTorch() -> Bool {
+        if let device = self.device {
+            return device.hasTorch
+        }
+        return false
+    }
+
+    @objc open func switchCamera() -> AVCaptureDevice.Position {
+        if !Platform.isSimulator {
+            self.session.stopRunning()
+            let captureDevice = self.captureDevice()
+            if let device = captureDevice {
+                self.device = device
+            }
+            self.setupCamera()
+            self.view.setNeedsLayout()
+            self.session.startRunning()
+            if let device = self.device {
+                return device.position
+            } else {
+                return .unspecified
+            }
+        } else {
+            return .unspecified
+        }
+    }
+
+    @discardableResult
 	@objc open func toggleTorch() -> Bool {
 		if self.hasTorch() {
 			self.session.beginConfiguration()
