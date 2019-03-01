@@ -20,7 +20,7 @@ open class RSCodeReaderViewController: UIViewController, AVCaptureMetadataOutput
 	@objc open var cornersLayer = RSCornersLayer()
 	
 	@objc open var tapHandler: ((CGPoint) -> Void)?
-	@objc open var barcodesHandler: ((Array<AVMetadataMachineReadableCodeObject>) -> Void)?
+	@objc open var barcodesHandler: (([AVMetadataMachineReadableCodeObject]) -> Void)?
 	
 	@objc var ticker: Timer?
 	
@@ -387,8 +387,8 @@ open class RSCodeReaderViewController: UIViewController, AVCaptureMetadataOutput
 	// MARK: AVCaptureMetadataOutputObjectsDelegate
 
 	public func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-		var barcodeObjects : Array<AVMetadataMachineReadableCodeObject> = []
-		var cornersArray : Array<[Any]> = []
+		var barcodeObjects : [AVMetadataMachineReadableCodeObject] = []
+		var cornersArray : [[CGPoint]] = []
 		for metadataObject in metadataObjects {
 			if let videoPreviewLayer = self.videoPreviewLayer {
 				if let transformedMetadataObject = videoPreviewLayer.transformedMetadataObject(for: metadataObject ) {
