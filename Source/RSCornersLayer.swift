@@ -15,9 +15,9 @@ open class RSCornersLayer: CALayer {
     @objc open var drawingCornersArray: Array<Array<CGPoint>> = []
     @objc open var cornersArray: [[CGPoint]] = [] {
         willSet {
-            DispatchQueue.main.async(execute: {
+            DispatchQueue.main.async {
                 self.setNeedsDisplay()
-            })
+            }
         }
     }
     

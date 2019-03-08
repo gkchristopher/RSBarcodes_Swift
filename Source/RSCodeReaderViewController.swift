@@ -238,33 +238,32 @@ open class RSCodeReaderViewController: UIViewController, AVCaptureMetadataOutput
 		if let device = self.device {
 			do {
 				try device.lockForConfiguration()
-				device.setFocusModeLocked(lensPosition: self.lensPosition, completionHandler: nil)
+				device.setFocusModeLocked(lensPosition: self.lensPosition)
 				device.unlockForConfiguration()
 			} catch _ {
 			}
 		}
 		if session.isRunning {
-			let when = DispatchTime.now() + Double(Int64(10 * Double(USEC_PER_SEC))) / Double(NSEC_PER_SEC)
-			DispatchQueue.main.asyncAfter(deadline: when, execute: {
+			DispatchQueue.main.asyncAfter(deadline: .now() + 0.01) {
 				self.autoUpdateLensPosition()
-			})
+			}
 		}
 	}
 	
 	@objc func onTick() {
-		if let ticker = self.ticker {
+		if let ticker = ticker {
 			ticker.invalidate()
 		}
-		self.cornersLayer.cornersArray = []
+		cornersLayer.cornersArray = []
 	}
 	
 	@objc func onTap(_ gesture: UITapGestureRecognizer) {
-		let tapPoint = gesture.location(in: self.view)
+		let tapPoint = gesture.location(in: view)
 		let focusPoint = CGPoint(
-			x: tapPoint.x / self.view.bounds.size.width,
-			y: tapPoint.y / self.view.bounds.size.height)
+			x: tapPoint.x / view.bounds.size.width,
+			y: tapPoint.y / view.bounds.size.height)
 		
-		if let device = self.device {
+		if let device = device {
 			do {
 				try device.lockForConfiguration()
 				if device.isFocusPointOfInterestSupported {
@@ -272,17 +271,17 @@ open class RSCodeReaderViewController: UIViewController, AVCaptureMetadataOutput
 				} else {
 					print("Focus point of interest not supported.")
 				}
-				if self.isCrazyMode {
+				if isCrazyMode {
 					if device.isFocusModeSupported(.locked) {
 						device.focusMode = .locked
 					} else {
 						print("Locked focus not supported.")
 					}
-					if !self.isCrazyModeStarted {
-						self.isCrazyModeStarted = true
-						DispatchQueue.main.async(execute: { () -> Void in
+					if !isCrazyModeStarted {
+						isCrazyModeStarted = true
+						DispatchQueue.main.async {
 							self.autoUpdateLensPosition()
-						})
+						}
 					}
 				} else {
 					if device.isFocusModeSupported(.continuousAutoFocus) {
@@ -299,25 +298,25 @@ open class RSCodeReaderViewController: UIViewController, AVCaptureMetadataOutput
 					print("Auto focus range restriction not supported.")
 				}
 				device.unlockForConfiguration()
-				self.focusMarkLayer.point = tapPoint
-			} catch _ {
+				focusMarkLayer.point = tapPoint
+			} catch {
 			}
 		}
 		
-		if let tapHandler = self.tapHandler {
+		if let tapHandler = tapHandler {
 			tapHandler(tapPoint)
 		}
 	}
 	
 	@objc func onApplicationWillEnterForeground() {
 		if !Platform.isSimulator {
-			self.session.startRunning()
+			session.startRunning()
 		}
 	}
 	
 	@objc func onApplicationDidEnterBackground() {
 		if !Platform.isSimulator {
-			self.session.stopRunning()
+			session.stopRunning()
 		}
 	}
 	
@@ -331,10 +330,10 @@ open class RSCodeReaderViewController: UIViewController, AVCaptureMetadataOutput
 	
 	override open func viewDidLayoutSubviews() {
 		super.viewDidLayoutSubviews()
-		let frame = self.view.bounds
-		self.videoPreviewLayer?.frame = frame
-		self.focusMarkLayer.frame = frame
-		self.cornersLayer.frame = frame
+		let frame = view.bounds
+		videoPreviewLayer?.frame = frame
+		focusMarkLayer.frame = frame
+		cornersLayer.frame = frame
 	}
 	
 	override open func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
@@ -349,62 +348,58 @@ open class RSCodeReaderViewController: UIViewController, AVCaptureMetadataOutput
 	override open func viewDidLoad() {
 		super.viewDidLoad()
 		
-		self.view.backgroundColor = UIColor.clear
+		view.backgroundColor = UIColor.clear
 		
-		self.setupCamera()
+		setupCamera()
 		
 		let tapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(RSCodeReaderViewController.onTap(_:)))
-		self.view.addGestureRecognizer(tapGestureRecognizer)
+		view.addGestureRecognizer(tapGestureRecognizer)
 		
-		self.focusMarkLayer.frame = self.view.bounds
-		self.view.layer.insertSublayer(self.focusMarkLayer, above: self.videoPreviewLayer)
+		focusMarkLayer.frame = self.view.bounds
+		view.layer.insertSublayer(self.focusMarkLayer, above: videoPreviewLayer)
 		
-		self.cornersLayer.frame = self.view.bounds
-		self.view.layer.insertSublayer(self.cornersLayer, above: self.videoPreviewLayer)
+		cornersLayer.frame = self.view.bounds
+		view.layer.insertSublayer(self.cornersLayer, above: videoPreviewLayer)
 	}
 	
 	override open func viewWillAppear(_ animated: Bool) {
 		super.viewWillAppear(animated)
-		
+
         NotificationCenter.default.addObserver(self, selector: #selector(RSCodeReaderViewController.onApplicationWillEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(RSCodeReaderViewController.onApplicationDidEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
-		
-		if !Platform.isSimulator {
-			self.session.startRunning()
-		}
-	}
-	
-	override open func viewDidDisappear(_ animated: Bool) {
-		super.viewDidDisappear(animated)
 
-      NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
-      NotificationCenter.default.removeObserver(self, name: UIApplication.didEnterBackgroundNotification, object: nil)
-		if !Platform.isSimulator {
-			self.session.stopRunning()
-		}
-	}
-	
-	// MARK: AVCaptureMetadataOutputObjectsDelegate
+        if !Platform.isSimulator {
+            self.session.startRunning()
+        }
+    }
 
-	public func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
-		var barcodeObjects : [AVMetadataMachineReadableCodeObject] = []
-		var cornersArray : [[CGPoint]] = []
-		for metadataObject in metadataObjects {
-			if let videoPreviewLayer = self.videoPreviewLayer {
-				if let transformedMetadataObject = videoPreviewLayer.transformedMetadataObject(for: metadataObject ) {
-					if transformedMetadataObject.isKind(of: AVMetadataMachineReadableCodeObject.self) {
-						let barcodeObject = transformedMetadataObject as! AVMetadataMachineReadableCodeObject
-						barcodeObjects.append(barcodeObject)
-						cornersArray.append(barcodeObject.corners)
-					}
-				}
-			}
-		}
-		
-		self.cornersLayer.cornersArray = cornersArray
-		
+    override open func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+
+        NotificationCenter.default.removeObserver(self, name: UIApplication.willEnterForegroundNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIApplication.didEnterBackgroundNotification, object: nil)
+        if !Platform.isSimulator {
+            session.stopRunning()
+        }
+    }
+
+    // MARK: AVCaptureMetadataOutputObjectsDelegate
+
+    public func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+        var barcodeObjects : [AVMetadataMachineReadableCodeObject] = []
+        var cornersArray : [[CGPoint]] = []
+        for metadataObject in metadataObjects {
+            guard let videoPreviewLayer = videoPreviewLayer else { continue }
+            if let barcodeObject = videoPreviewLayer.transformedMetadataObject(for: metadataObject) as? AVMetadataMachineReadableCodeObject {
+                barcodeObjects.append(barcodeObject)
+                cornersArray.append(barcodeObject.corners)
+            }
+        }
+
+        cornersLayer.cornersArray = cornersArray
+
 		if barcodeObjects.count > 0 {
-			if let barcodesHandler = self.barcodesHandler {
+			if let barcodesHandler = barcodesHandler {
 				barcodesHandler(barcodeObjects)
 			}
 		}
