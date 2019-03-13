@@ -22,8 +22,6 @@ open class RSCornersLayer: CALayer {
     }
     
     override open func draw(in ctx: CGContext) {
-        guard let cornerPointsArray = cornersArray as? [[CGPoint]] else { return }
-
         objc_sync_enter(self)
         
         ctx.saveGState()
@@ -34,7 +32,7 @@ open class RSCornersLayer: CALayer {
         ctx.setStrokeColor(self.strokeColor)
         ctx.setLineWidth(self.strokeWidth)
         
-        for corners in cornerPointsArray {
+        for corners in cornersArray {
             for (idx, point) in corners.enumerated() {
                 if idx == 0 {
                     ctx.move(to: point)
