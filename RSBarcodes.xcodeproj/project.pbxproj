@@ -103,7 +103,7 @@
 				D08336C91A209AAB004EE128 /* UIColorExtension.swift */,
 				D083363A1A202E81004EE128 /* Supporting Files */,
 			);
-			path = RSBarcodes;
+			name = RSBarcodes;
 			sourceTree = "<group>";
 		};
 		D083363A1A202E81004EE128 /* Supporting Files */ = {
